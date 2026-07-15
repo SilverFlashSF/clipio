@@ -10,7 +10,10 @@ import {
   SafeAreaView,
   ScrollView,
   Platform,
+  Linking,
+  AppState,
 } from 'react-native';
+import * as FileSystem from 'expo-file-system/legacy';
 import { useClipboardStore } from '../store/clipboardStore';
 import { startClipboardMonitor, stopClipboardMonitor, registerBackgroundFetch } from '../services/clipboardMonitor';
 import ClipItemCard from '../components/ClipItemCard';
@@ -19,17 +22,95 @@ import EmptyState from '../components/EmptyState';
 import { Colors, Typography, Spacing, Radius } from '../constants/theme';
 import { ClipItem } from '../store/clipboardStore';
 
+const BACKGROUND_CLIPS_FILE = FileSystem.documentDirectory + 'background_clips.json';
+const STATUS_FILE = FileSystem.documentDirectory + 'service_status.json';
+
 export default function HomeScreen() {
   const { items, isLoaded, loadFromStorage, removeItem, clearUnpinned, togglePin } = useClipboardStore();
   const [search, setSearch] = useState('');
+  const [isAccessibilityActive, setIsAccessibilityActive] = useState(true);
+
+  // Sync background clips
+  const syncBackgroundClips = async () => {
+    try {
+      const info = await FileSystem.getInfoAsync(BACKGROUND_CLIPS_FILE);
+      if (info.exists) {
+        const content = await FileSystem.readAsStringAsync(BACKGROUND_CLIPS_FILE);
+        if (content) {
+          const parsed: string[] = JSON.parse(content);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const store = useClipboardStore.getState();
+            parsed.forEach((text) => {
+              store.addItem(text, 'text');
+            });
+            await FileSystem.deleteAsync(BACKGROUND_CLIPS_FILE, { idempotent: true });
+          }
+        }
+      }
+    } catch (_) {}
+  };
+
+  // Check accessibility status keep-alive file
+  const checkAccessibilityStatus = async (): Promise<boolean> => {
+    try {
+      const info = await FileSystem.getInfoAsync(STATUS_FILE);
+      if (info.exists) {
+        const content = await FileSystem.readAsStringAsync(STATUS_FILE);
+        if (content) {
+          const parsed = JSON.parse(content);
+          const diff = Date.now() - parsed.timestamp;
+          // If the service has written status within the last 4 seconds, it is active
+          if (diff < 4000) {
+            return true;
+          }
+        }
+      }
+    } catch (_) {}
+    return false;
+  };
+
+  // Open settings
+  const handleEnableAccessibility = () => {
+    if (Platform.OS === 'android') {
+      Linking.sendIntent('android.settings.ACCESSIBILITY_SETTINGS').catch(() => {
+        Alert.alert('Error', 'Could not open accessibility settings. Please enable Clipio manually.');
+      });
+    }
+  };
 
   // Init on mount
   useEffect(() => {
+    let isActive = true;
+
+    const runSyncAndCheck = async () => {
+      await syncBackgroundClips();
+      const active = await checkAccessibilityStatus();
+      if (isActive) {
+        setIsAccessibilityActive(active);
+      }
+    };
+
     loadFromStorage().then(() => {
       startClipboardMonitor();
       registerBackgroundFetch();
+      runSyncAndCheck();
     });
-    return () => stopClipboardMonitor();
+
+    // Periodically sync and check status while app is open
+    const statusInterval = setInterval(runSyncAndCheck, 2000);
+
+    const sub = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') {
+        runSyncAndCheck();
+      }
+    });
+
+    return () => {
+      isActive = false;
+      clearInterval(statusInterval);
+      sub.remove();
+      stopClipboardMonitor();
+    };
   }, []);
 
   const handleClearAll = () => {
@@ -97,6 +178,18 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
       </View>
+
+      {/* ── Accessibility Alert Banner ───────────────────────────────── */}
+      {!isAccessibilityActive && Platform.OS === 'android' && (
+        <View style={styles.banner}>
+          <Text style={styles.bannerText}>
+            ⚠️ Background clipboard history is off. Turn on "Clipio" in settings.
+          </Text>
+          <TouchableOpacity style={styles.bannerBtn} onPress={handleEnableAccessibility}>
+            <Text style={styles.bannerBtnText}>Enable</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* ── Search ───────────────────────────────────────────────────── */}
       <SearchBar
@@ -213,5 +306,37 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.sm,
     marginTop: Spacing.xs,
+  },
+  banner: {
+    backgroundColor: 'rgba(255, 214, 10, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 214, 10, 0.25)',
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.sm,
+  },
+  bannerText: {
+    ...Typography.fontRegular,
+    fontSize: 13,
+    color: '#FFD60A',
+    flex: 1,
+    lineHeight: 18,
+    letterSpacing: Typography.letterSpacingNormal,
+  },
+  bannerBtn: {
+    backgroundColor: '#FFD60A',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 6,
+    borderRadius: Radius.sm,
+  },
+  bannerBtnText: {
+    ...Typography.fontSemibold,
+    fontSize: 12,
+    color: '#000000',
   },
 });
