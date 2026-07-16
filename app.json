@@ -22,7 +22,7 @@
         "android.permission.VIBRATE"
       ],
       "package": "com.omgit.clipio",
-      "versionCode": 10
+      "versionCode": 11
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -42,7 +42,7 @@
         "expo-build-properties",
         {
           "android": {
-            "kotlinVersion": "2.3.10"
+            "kotlinVersion": "2.3.0"
           }
         }
       ]
