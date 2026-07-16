@@ -23,7 +23,8 @@
     "production": {
       "android": {
         "serviceAccountKeyPath": "/Users/sittnainglinn/Downloads/clipio-502602-c65686f487ba.json",
-        "track": "alpha"
+        "track": "alpha",
+        "releaseStatus": "draft"
       }
     }
   }
