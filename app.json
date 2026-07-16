@@ -22,14 +22,15 @@
         "android.permission.VIBRATE"
       ],
       "package": "com.omgit.clipio",
-      "versionCode": 3
+      "versionCode": 5
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-background-fetch",
-      "expo-notifications"
+      "expo-notifications",
+      "./plugins/withAccessibilityService"
     ],
     "extra": {
       "eas": {
