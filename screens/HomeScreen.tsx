@@ -14,6 +14,7 @@ import {
   AppState,
 } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
+import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 import { useClipboardStore } from '../store/clipboardStore';
 import { startClipboardMonitor, stopClipboardMonitor, registerBackgroundFetch } from '../services/clipboardMonitor';
 import ClipItemCard from '../components/ClipItemCard';
@@ -22,6 +23,7 @@ import EmptyState from '../components/EmptyState';
 import { Colors, Typography, Spacing, Radius } from '../constants/theme';
 import { ClipItem } from '../store/clipboardStore';
 
+const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-3940256099942544/6300978111';
 const BACKGROUND_CLIPS_FILE = FileSystem.documentDirectory + 'background_clips.json';
 const STATUS_FILE = FileSystem.documentDirectory + 'service_status.json';
 
@@ -237,6 +239,17 @@ export default function HomeScreen() {
           }
         />
       )}
+
+      {/* ── Sticky Banner Ad ────────────────────────────────────────── */}
+      <View style={styles.adContainer}>
+        <BannerAd
+          unitId={adUnitId}
+          size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+          requestOptions={{
+            requestNonPersonalizedAdsOnly: true,
+          }}
+        />
+      </View>
     </SafeAreaView>
   );
 }
@@ -338,5 +351,13 @@ const styles = StyleSheet.create({
     ...Typography.fontSemibold,
     fontSize: 12,
     color: '#000000',
+  },
+  adContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.sm,
+    backgroundColor: Colors.bg,
+    borderTopWidth: 1,
+    borderColor: Colors.border,
   },
 });
