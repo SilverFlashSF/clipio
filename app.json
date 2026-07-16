@@ -30,7 +30,8 @@
     "plugins": [
       "expo-background-fetch",
       "expo-notifications",
-      "./plugins/withAccessibilityService"
+      "./plugins/withAccessibilityService",
+      "react-native-google-mobile-ads"
     ],
     "extra": {
       "eas": {
