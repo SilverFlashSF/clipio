@@ -22,7 +22,7 @@
         "android.permission.VIBRATE"
       ],
       "package": "com.omgit.clipio",
-      "versionCode": 6
+      "versionCode": 7
     },
     "web": {
       "favicon": "./assets/favicon.png"
