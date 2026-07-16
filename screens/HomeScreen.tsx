@@ -12,6 +12,7 @@ import {
   Platform,
   Linking,
   AppState,
+  Modal,
 } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
@@ -31,6 +32,7 @@ export default function HomeScreen() {
   const { items, isLoaded, loadFromStorage, removeItem, clearUnpinned, togglePin } = useClipboardStore();
   const [search, setSearch] = useState('');
   const [isAccessibilityActive, setIsAccessibilityActive] = useState(true);
+  const [showDisclosure, setShowDisclosure] = useState(false);
 
   // Sync background clips
   const syncBackgroundClips = async () => {
@@ -187,11 +189,61 @@ export default function HomeScreen() {
           <Text style={styles.bannerText}>
             ⚠️ Background clipboard history is off. Turn on "Clipio" in settings.
           </Text>
-          <TouchableOpacity style={styles.bannerBtn} onPress={handleEnableAccessibility}>
+          <TouchableOpacity style={styles.bannerBtn} onPress={() => setShowDisclosure(true)}>
             <Text style={styles.bannerBtnText}>Enable</Text>
           </TouchableOpacity>
         </View>
       )}
+
+      {/* ── Prominent Disclosure Modal ────────────────────────────────── */}
+      <Modal
+        visible={showDisclosure}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowDisclosure(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Clipboard Monitor Permission</Text>
+            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+              <Text style={styles.modalText}>
+                Clipio uses the <Text style={styles.boldText}>AccessibilityServices API</Text> to monitor when copy operations happen across other apps on your device.
+              </Text>
+              <Text style={styles.modalText}>
+                This permission allows the app to automatically capture and record your clipboard history in the background, even when the Clipio app is closed.
+              </Text>
+              <Text style={styles.modalSectionHeader}>Data Collection & Privacy:</Text>
+              <Text style={styles.modalBullet}>
+                • <Text style={styles.boldText}>Usage:</Text> Used solely to detect text copies and log them locally.
+              </Text>
+              <Text style={styles.modalBullet}>
+                • <Text style={styles.boldText}>Privacy:</Text> Clipio does not collect, save, or share any clipboard text online. All history stays 100% locally and securely stored on your phone.
+              </Text>
+              <Text style={styles.modalBullet}>
+                • <Text style={styles.boldText}>Control:</Text> You can disable this service at any time in your device's settings.
+              </Text>
+            </ScrollView>
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.cancelModalBtn}
+                onPress={() => setShowDisclosure(false)}
+              >
+                <Text style={styles.cancelModalBtnText}>Deny</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.agreeBtn}
+                onPress={() => {
+                  setShowDisclosure(false);
+                  handleEnableAccessibility();
+                }}
+              >
+                <Text style={styles.agreeBtnText}>Accept & Enable</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* ── Search ───────────────────────────────────────────────────── */}
       <SearchBar
@@ -359,5 +411,92 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bg,
     borderTopWidth: 1,
     borderColor: Colors.border,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.lg,
+  },
+  modalContent: {
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
+    padding: Spacing.lg,
+    width: '100%',
+    maxWidth: 320,
+    maxHeight: '80%',
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  modalTitle: {
+    ...Typography.fontBold,
+    fontSize: 18,
+    color: Colors.text,
+    marginBottom: Spacing.md,
+    textAlign: 'center',
+  },
+  modalBody: {
+    marginBottom: Spacing.lg,
+  },
+  modalText: {
+    ...Typography.fontRegular,
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.sm,
+    lineHeight: 20,
+  },
+  modalSectionHeader: {
+    ...Typography.fontSemibold,
+    fontSize: 14,
+    color: Colors.text,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.xs,
+  },
+  modalBullet: {
+    ...Typography.fontRegular,
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.xs,
+    lineHeight: 18,
+    paddingLeft: Spacing.xs,
+  },
+  boldText: {
+    ...Typography.fontBold,
+    color: Colors.text,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: Spacing.md,
+  },
+  cancelModalBtn: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 10,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 80,
+  },
+  cancelModalBtnText: {
+    ...Typography.fontMedium,
+    fontSize: 14,
+    color: Colors.textSecondary,
+  },
+  agreeBtn: {
+    backgroundColor: '#FFD60A',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 10,
+    borderRadius: Radius.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 120,
+  },
+  agreeBtnText: {
+    ...Typography.fontBold,
+    fontSize: 14,
+    color: '#000000',
   },
 });
