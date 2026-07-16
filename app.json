@@ -22,7 +22,7 @@
         "android.permission.VIBRATE"
       ],
       "package": "com.omgit.clipio",
-      "versionCode": 8
+      "versionCode": 9
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -31,16 +31,18 @@
       "expo-background-fetch",
       "expo-notifications",
       "./plugins/withAccessibilityService",
-      "react-native-google-mobile-ads"
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
+        }
+      ]
     ],
     "extra": {
       "eas": {
         "projectId": "9f6ad462-16f4-41dc-8740-23dcb8033571"
       }
-    },
-    "react-native-google-mobile-ads": {
-      "android_app_id": "ca-app-pub-3940256099942544~3347511713",
-      "ios_app_id": "ca-app-pub-3940256099942544~1458002511"
     }
   }
 }
